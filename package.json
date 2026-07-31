@@ -1,0 +1,27 @@
+{
+  "name": "helpdeskvuln",
+  "version": "1.0.0",
+  "description": "Intentionally vulnerable Node.js Express helpdesk benchmark app for SAST/SCA POC testing. DO NOT DEPLOY.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "mocha test/**/*.test.js"
+  },
+  "dependencies": {
+    "express": "4.16.0",
+    "mongoose": "5.9.0",
+    "jsonwebtoken": "8.3.0",
+    "lodash": "4.17.4",
+    "minimist": "0.0.8",
+    "axios": "0.18.0",
+    "multer": "1.4.1",
+    "body-parser": "1.18.2",
+    "cors": "2.8.4",
+    "libxmljs2": "0.30.0"
+  },
+  "devDependencies": {
+    "mocha": "10.2.0",
+    "chai": "4.3.7",
+    "mongodb-memory-server": "8.12.2"
+  }
+}

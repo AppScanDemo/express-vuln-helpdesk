@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  helpdeskvuln:
+    build: .
+    ports:
+      - "8085:8085"
+    env_file:
+      - .env.example
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: helpdesk
+      MONGO_INITDB_ROOT_PASSWORD: Password123
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
