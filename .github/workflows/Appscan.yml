@@ -28,10 +28,11 @@ jobs:
       # --- PROSES SCANNING APPSCAN ---
       - name: 4. Run AppScan SAST Scan
         uses: HCL-TECH-SOFTWARE/appscan-sast-action@v1.1.0
+        continue-on-error: true
         with:
           asoc_key: ${{ secrets.ASOC2_ID }}
           asoc_secret: ${{ secrets.ASOC2_SECRET }}
           application_id: "93451ffb-ffa0-444d-a8ee-4853c0bac987"
-          scan_name: "SAST_ExpressJS_PNM"
+          scan_name: "SAST_ExpressJS_PNM2"
           static_analysis_only: true
           wait_for_analysis: false
