@@ -1,0 +1,36 @@
+name: HCL AppScan on Cloud (ASoC) SAST Scan
+
+on:
+  push:
+    branches: [ "main", "master", "VS_2010" ]
+  pull_request:
+    branches: [ "main", "master", "VS_2010" ]
+  workflow_dispatch:
+
+jobs:
+  AppScan-SAST:
+    name: Run AppScan SAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Code
+        uses: actions/checkout@v4
+
+      # --- TAMBAHAN KHUSUS JAVASCRIPT / NODE.JS ---
+      - name: 2. Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 3. Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      # --- PROSES SCANNING APPSCAN ---
+      - name: 4. Run AppScan SAST Scan
+        uses: HCL-TECH-SOFTWARE/appscan-sast-action@v1.1.0
+        with:
+          asoc_key: ${{ secrets.ASOC2_ID }}
+          asoc_secret: ${{ secrets.ASOC2_SECRET }}
+          application_id: "96db2291-ca25-40c2-a0d7-f1b780bfe6ae"
+          scan_name: "SAST_ExpressJS_PNMHelpdesk_GitHub"
+          static_analysis_only: true
