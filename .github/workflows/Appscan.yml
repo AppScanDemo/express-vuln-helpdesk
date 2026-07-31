@@ -30,13 +30,13 @@ jobs:
           ASOC_ID: ${{ secrets.ASOC2_ID }}
           ASOC_SECRET: ${{ secrets.ASOC2_SECRET }}
         run: |
-          if [ -z "$ASOC2_ID" ] || [ -z "$ASOC2_SECRET" ]; then
+          if [ -z "$ASOC_ID" ] || [ -z "$ASOC_SECRET" ]; then
             echo "ERROR: ASOC_ID atau ASOC_SECRET tidak ditemukan di Secrets!"
             exit 1
           fi
 
           # Buat payload JSON secara aman menggunakan jq
-          JSON_PAYLOAD=$(jq -n --arg id "$ASOC2_ID" --arg sec "$ASOC2_SECRET" '{KeyId: $id, KeySecret: $sec}')
+          JSON_PAYLOAD=$(jq -n --arg id "$ASOC_ID" --arg sec "$ASOC_SECRET" '{KeyId: $id, KeySecret: $sec}')
 
           # 1. Login ke API v4 ASoC untuk mendapatkan Bearer Token
           AUTH_RESPONSE=$(curl -s -X POST "https://cloud.appscan.com/api/v4/Account/ApiKeyLogin" \
