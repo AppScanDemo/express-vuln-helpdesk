@@ -71,7 +71,7 @@ jobs:
       - name: 5. Generate & Queue SAST Scan
         run: |
           echo "=== Membuat paket IRX untuk SAST ==="
-          appscan.sh prepare -sastOnly -n SAST_ExpressJS_PNM2 -d . -f ./sast_scan.irx
+          appscan.sh prepare -n SAST_ExpressJS_PNM2 -d . -f ./sast_scan.irx
           
           echo "=== Mengirim SAST ke ASoC ==="
           appscan.sh queue_analysis -a "96db2291-ca25-40c2-a0d7-f1b780bfe6ae" -n "SAST_ExpressJS_PNM2" -f ./sast_scan.irx
@@ -80,7 +80,8 @@ jobs:
       - name: 6. Generate & Queue SCA (Open Source) Scan
         run: |
           echo "=== Membuat paket IRX untuk SCA (Open Source) ==="
-          appscan.sh prepare -osaOnly -n SCA_ExpressJS_PNM2 -d . -f ./sca_scan.irx
+          # Menggunakan flag -ose (Open Source Enabled) agar mendeteksi package.json & node_modules
+          appscan.sh prepare -ose -n SCA_ExpressJS_PNM2 -d . -f ./sca_scan.irx
           
           echo "=== Mengirim SCA ke ASoC ==="
           appscan.sh queue_analysis -a "96db2291-ca25-40c2-a0d7-f1b780bfe6ae" -n "SCA_ExpressJS_PNM2" -f ./sca_scan.irx
