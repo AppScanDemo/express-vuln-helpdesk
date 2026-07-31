@@ -54,7 +54,7 @@ jobs:
           appscan version
 
           echo "=== 3. Login ke AppScan on Cloud ==="
-          appscan api_login -u "$ASOC_KEY" -P "$ASOC_SECRET"
+          appscan api_login -u "$ASOC2_ID" -P "$ASOC2_SECRET"
 
           echo "=== 4. Membuat berkas IRX khusus SCA (-osaOnly) ==="
           appscan prepare -osaOnly -n "SCA_ExpressJS_PNM2" -f ./sca_result.irx
