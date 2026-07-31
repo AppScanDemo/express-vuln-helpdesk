@@ -2,9 +2,9 @@ name: HCL AppScan on Cloud (ASoC) SAST & SCA Scan
 
 on:
   push:
-    branches: [ "main", "master", "VS_2010" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "main", "master", "VS_2010" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
@@ -16,48 +16,71 @@ jobs:
       - name: 1. Checkout Code
         uses: actions/checkout@v4
 
-      - name: 2. Setup Node.js
+      # --- WAJIB UNTUK EXPRESSJS AGAR SCA BISA BACA DEPENDENSI ---
+      - name: 2. Setup Node.js & Install Dependencies
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-
-      - name: 3. Install Dependencies
+      - name: Install NPM Packages
         run: npm install --legacy-peer-deps
 
-      # --- STEP 4: SCAN SAST (KODE STATIS) ---
-      - name: 4. Run AppScan SAST Scan
-        uses: HCL-TECH-SOFTWARE/appscan-sast-action@v1.1.0
-        continue-on-error: true
-        with:
-          asoc_key: ${{ secrets.ASOC2_ID }}
-          asoc_secret: ${{ secrets.ASOC2_SECRET }}
-          application_id: "96db2291-ca25-40c2-a0d7-f1b780bfe6ae"
-          scan_name: "SAST_ExpressJS_PNM2"
-          static_analysis_only: true
-          wait_for_analysis: false
-
-      # --- STEP 5: SCAN SCA (OPEN SOURCE ANALYSIS VIA CLI) ---
-      - name: 5. Run AppScan SCA (Open Source) Scan
-        continue-on-error: true
+      # --- OTENTIKASI & DOWNLOAD SACLIENTUTIL VIA API V4 ---
+      - name: 3. Authenticate & Download SAClientUtil
         env:
-          ASOC_KEY: ${{ secrets.ASOC2_ID }}
+          ASOC_ID: ${{ secrets.ASOC2_ID }}
           ASOC_SECRET: ${{ secrets.ASOC2_SECRET }}
         run: |
-          echo "=== 1. Menghubungkan ke CLI SAClientUtil dari Step 4 ==="
-          # Mencari lokasi binary 'appscan' yang sudah diunduh oleh Step 4
-          CLI_PATH=$(find /home/runner/.appscan -name "appscan" -type f | head -n 1)
-          BIN_DIR=$(dirname "$CLI_PATH")
-          export PATH=$PATH:$BIN_DIR
-          chmod +x "$CLI_PATH" || true
+          if [ -z "$ASOC2_ID" ] || [ -z "$ASOC2_SECRET" ]; then
+            echo "ERROR: ASOC_ID atau ASOC_SECRET tidak ditemukan di Secrets!"
+            exit 1
+          fi
 
-          echo "=== 2. Cek Versi CLI ==="
-          appscan version
+          # Buat payload JSON secara aman menggunakan jq
+          JSON_PAYLOAD=$(jq -n --arg id "$ASOC2_ID" --arg sec "$ASOC2_SECRET" '{KeyId: $id, KeySecret: $sec}')
 
-          echo "=== 3. Login ke AppScan on Cloud ==="
-          appscan api_login -u "$ASOC2_ID" -P "$ASOC2_SECRET"
+          # 1. Login ke API v4 ASoC untuk mendapatkan Bearer Token
+          AUTH_RESPONSE=$(curl -s -X POST "https://cloud.appscan.com/api/v4/Account/ApiKeyLogin" \
+            -H "accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d "$JSON_PAYLOAD")
 
-          echo "=== 4. Membuat berkas IRX khusus SCA (-osaOnly) ==="
-          appscan prepare -osaOnly -n "SCA_ExpressJS_PNM2" -f ./sca_result.irx
+          TOKEN=$(echo $AUTH_RESPONSE | jq -r '.Token // empty')
 
-          echo "=== 5. Mengirim scan SCA ke ASoC ==="
-          appscan queue_analysis -a "96db2291-ca25-40c2-a0d7-f1b780bfe6ae" -n "SCA_ExpressJS_PNM2" -f ./sca_result.irx
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: Gagal Otentikasi API Key!"
+            echo "Response: $AUTH_RESPONSE"
+            exit 1
+          fi
+
+          echo "Berhasil otentikasi! Mengunduh SAClientUtil..."
+
+          # 2. Download SAClientUtil menggunakan Bearer Token
+          curl -sS -L -H "Authorization: Bearer $TOKEN" "https://cloud.appscan.com/api/v4/Tools/SAClientUtil?os=linux" -o SAClientUtil.zip
+
+          # 3. Ekstrak dan atur PATH
+          unzip -q SAClientUtil.zip
+          SAC_DIR=$(find . -maxdepth 1 -type d -name "SAClientUtil*" | head -n 1)
+          chmod +x $SAC_DIR/bin/appscan.sh
+          echo "$PWD/$SAC_DIR/bin" >> $GITHUB_PATH
+
+      - name: 4. Login to AppScan CLI
+        run: |
+          appscan.sh api_login -u ${{ secrets.ASOC2_ID }} -P ${{ secrets.ASOC2_SECRET }} -persist
+
+      # --- EKSEKUSI 1: SCAN SAST (STATIC CODE ANALYSIS) ---
+      - name: 5. Generate & Queue SAST Scan
+        run: |
+          echo "=== Membuat paket IRX untuk SAST ==="
+          appscan.sh prepare -sastOnly -n SAST_ExpressJS_PNM2 -d . -f ./sast_scan.irx
+          
+          echo "=== Mengirim SAST ke ASoC ==="
+          appscan.sh queue_analysis -a "96db2291-ca25-40c2-a0d7-f1b780bfe6ae" -n "SAST_ExpressJS_PNM2" -f ./sast_scan.irx
+
+      # --- EKSEKUSI 2: SCAN SCA (OPEN SOURCE ANALYSIS) ---
+      - name: 6. Generate & Queue SCA (Open Source) Scan
+        run: |
+          echo "=== Membuat paket IRX untuk SCA (Open Source) ==="
+          appscan.sh prepare -osaOnly -n SCA_ExpressJS_PNM2 -d . -f ./sca_scan.irx
+          
+          echo "=== Mengirim SCA ke ASoC ==="
+          appscan.sh queue_analysis -a "96db2291-ca25-40c2-a0d7-f1b780bfe6ae" -n "SCA_ExpressJS_PNM2" -f ./sca_scan.irx
