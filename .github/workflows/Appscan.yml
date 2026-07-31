@@ -43,19 +43,21 @@ jobs:
           ASOC_KEY: ${{ secrets.ASOC2_ID }}
           ASOC_SECRET: ${{ secrets.ASOC2_SECRET }}
         run: |
-          echo "=== 1. Mengunduh SAClientUtil CLI ==="
-          curl -sL "https://cloud.appscan.com/api/v2/Tools/SAClientUtil?os=Linux" -o SAClientUtil.zip
-          unzip -q -o SAClientUtil.zip -d ./appscan_sca_tools
-          
-          # Menambahkan folder bin SAClientUtil ke PATH secara otomatis
-          BIN_PATH=$(find $(pwd)/appscan_sca_tools -name "bin" -type d | head -n 1)
-          export PATH=$PATH:$BIN_PATH
+          echo "=== 1. Menghubungkan ke CLI SAClientUtil dari Step 4 ==="
+          # Mencari lokasi binary 'appscan' yang sudah diunduh oleh Step 4
+          CLI_PATH=$(find /home/runner/.appscan -name "appscan" -type f | head -n 1)
+          BIN_DIR=$(dirname "$CLI_PATH")
+          export PATH=$PATH:$BIN_DIR
+          chmod +x "$CLI_PATH" || true
 
-          echo "=== 2. Login ke AppScan on Cloud ==="
+          echo "=== 2. Cek Versi CLI ==="
+          appscan version
+
+          echo "=== 3. Login ke AppScan on Cloud ==="
           appscan api_login -u "$ASOC_KEY" -P "$ASOC_SECRET"
 
-          echo "=== 3. Membuat berkas IRX khusus SCA (-osaOnly) ==="
+          echo "=== 4. Membuat berkas IRX khusus SCA (-osaOnly) ==="
           appscan prepare -osaOnly -n "SCA_ExpressJS_PNM2" -f ./sca_result.irx
 
-          echo "=== 4. Mengirim scan SCA ke ASoC ==="
+          echo "=== 5. Mengirim scan SCA ke ASoC ==="
           appscan queue_analysis -a "96db2291-ca25-40c2-a0d7-f1b780bfe6ae" -n "SCA_ExpressJS_PNM2" -f ./sca_result.irx
