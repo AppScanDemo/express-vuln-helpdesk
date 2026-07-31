@@ -1,4 +1,4 @@
-name: HCL AppScan on Cloud (ASoC) SAST Scan
+name: HCL AppScan on Cloud (ASoC) SAST & SCA Scan
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  AppScan-SAST:
-    name: Run AppScan SAST Scan
+  AppScan-SAST-SCA:
+    name: Run AppScan SAST & SCA Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       - name: 3. Install Dependencies
         run: npm install --legacy-peer-deps
 
-      # --- PROSES SCANNING APPSCAN ---
+      # --- 1. PROSES SCANNING SAST (STATIC ANALYSIS) ---
       - name: 4. Run AppScan SAST Scan
         uses: HCL-TECH-SOFTWARE/appscan-sast-action@v1.1.0
         continue-on-error: true
@@ -33,6 +33,18 @@ jobs:
           asoc_key: ${{ secrets.ASOC2_ID }}
           asoc_secret: ${{ secrets.ASOC2_SECRET }}
           application_id: "93451ffb-ffa0-444d-a8ee-4853c0bac987"
-          scan_name: "SAST_ExpressJS_PNM2"
+          scan_name: "SAST_ExpressJS_PNM2_with SCA"
           static_analysis_only: true
+          wait_for_analysis: false
+
+      # --- 2. PROSES SCANNING SCA (OPEN SOURCE ANALYSIS) ---
+      - name: 5. Run AppScan SCA (Open Source) Scan
+        uses: HCL-TECH-SOFTWARE/appscan-sast-action@v1.1.0
+        continue-on-error: true
+        with:
+          asoc_key: ${{ secrets.ASOC2_ID }}
+          asoc_secret: ${{ secrets.ASOC2_SECRET }}
+          application_id: "93451ffb-ffa0-444d-a8ee-4853c0bac987"
+          scan_name: "SCA_ExpressJS_PNM2_with SCA"
+          open_source_only: true
           wait_for_analysis: false
