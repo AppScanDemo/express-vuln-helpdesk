@@ -1,0 +1,27 @@
+name: HCL AppScan on Cloud (ASoC) SAST Scan
+
+on:
+  push:
+    branches: [ "main", "master", "VS_2010" ]
+  pull_request:
+    branches: [ "main", "master", "VS_2010" ]
+  workflow_dispatch:
+
+jobs:
+  AppScan-SAST:
+    name: Run AppScan SAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 2. Run AppScan SAST Scan
+        uses: HCL-TECH-SOFTWARE/appscan-sast-action@v1.1.0
+        continue-on-error: true   
+        with:
+          asoc_key: ${{ secrets.ASOC2_ID }}
+          asoc_secret: ${{ secrets.ASOC2_SECRET }}
+          application_id: "93451ffb-ffa0-444d-a8ee-4853c0bac987"
+          scan_name: "SAST_JavaPNM_GitHub"
+          static_analysis_only: true
