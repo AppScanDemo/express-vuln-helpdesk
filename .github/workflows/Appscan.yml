@@ -31,6 +31,7 @@ jobs:
         with:
           asoc_key: ${{ secrets.ASOC2_ID }}
           asoc_secret: ${{ secrets.ASOC2_SECRET }}
-          application_id: "96db2291-ca25-40c2-a0d7-f1b780bfe6ae"
-          scan_name: "SAST_ExpressJS_PNMHelpdesk_GitHub"
+          application_id: "93451ffb-ffa0-444d-a8ee-4853c0bac987"
+          scan_name: "SAST_ExpressJS_PNM"
           static_analysis_only: true
+          wait_for_analysis: false
